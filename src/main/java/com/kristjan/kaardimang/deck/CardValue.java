@@ -1,7 +1,6 @@
 package com.kristjan.kaardimang.deck;
 
-public enum CardValue
-{
+public enum CardValue {
     TWO(2),
     THREE(3),
     FOUR(4),
@@ -16,10 +15,9 @@ public enum CardValue
     KING(10),
     ACE(10);
 
-    private int cardValue;
+    private final int cardValue;
 
-    private CardValue (int value)
-    {
+    CardValue (int value) {
         this.cardValue = value;
     }
 
