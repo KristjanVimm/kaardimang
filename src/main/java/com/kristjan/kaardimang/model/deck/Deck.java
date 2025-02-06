@@ -1,4 +1,4 @@
-package com.kristjan.kaardimang.deck;
+package com.kristjan.kaardimang.model.deck;
 
 import java.util.*;
 
@@ -23,12 +23,5 @@ public class Deck {
         int index = randomGenerator.nextInt(deck.size());
         return deck.get(index);
     }
-
-//    public static void main(String[] args) {
-//        Deck deck = new Deck();
-//        Card randomCard = deck.getRandomCard();
-//        System.out.println(randomCard);
-//        System.out.println(randomCard.getCardRank());
-//    }
 
 }

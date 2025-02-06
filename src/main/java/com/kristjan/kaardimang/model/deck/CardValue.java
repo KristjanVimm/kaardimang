@@ -1,4 +1,4 @@
-package com.kristjan.kaardimang.deck;
+package com.kristjan.kaardimang.model.deck;
 
 public enum CardValue {
     TWO(2),

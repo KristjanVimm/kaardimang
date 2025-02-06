@@ -1,12 +1,19 @@
 package com.kristjan.kaardimang.controller;
 
-import com.kristjan.kaardimang.deck.Card;
-import com.kristjan.kaardimang.deck.Deck;
+import com.kristjan.kaardimang.entity.Player;
+import com.kristjan.kaardimang.model.RoundResponse;
+import com.kristjan.kaardimang.model.RoundResponseMessage;
+import com.kristjan.kaardimang.entity.Game;
+import com.kristjan.kaardimang.model.Choice;
 import com.kristjan.kaardimang.repository.GameRepository;
+import com.kristjan.kaardimang.service.GameService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -15,69 +22,92 @@ import java.util.concurrent.TimeUnit;
 @CrossOrigin(origins = "http://localhost:5173")
 public class GameController {
 
-    private final Deck deck = new Deck();
-    private int lives = 3;
-    private int score = 0;
-    private Card card;
-    private Card lastCard;
-    private String choice;
 
     @Autowired
     GameRepository gameRepository;
+    @Autowired
+    GameService gameService;
 
     @GetMapping("score")
     public int getScore() {
-        return score;
+        return gameService.getScore();
     }
 
     @GetMapping("lives")
     public int getLives() {
-        return lives;
+        return gameService.getLives();
     }
 
-    @GetMapping("start-round")
-    public Card startRoundRequest() {
-        if (lives == 0) {
-            return new Card();
-        }
-        if (card == null) {
-            card = deck.getRandomCard();
-        }
-        return card;
+    @PostMapping("start-round")
+    public RoundResponse startRoundRequest(@RequestParam String playerName) {
+        RoundResponse roundResponse = new RoundResponse();
+        RoundResponse roundStarted = gameService.checkRoundStarted(roundResponse);
+        if (roundStarted != null)
+            return roundStarted;
+        RoundResponse livesZero = gameService.checkLivesZero(roundResponse);
+        if (livesZero != null)
+            return livesZero;
+        gameService.checkIfFirstRound(roundResponse, playerName);
+        return roundResponse;
     }
 
     @PostMapping("make-choice")
-    public void makeChoice(@RequestParam String playerChoice) {
-        choice = playerChoice;
+    public void makeChoice(@RequestParam Choice playerChoice) {
+        gameService.initChoice(playerChoice);
     }
 
     @PostMapping("wait-and-calculate")
-    public Card waitAndCalculateScore() throws InterruptedException {
+    public RoundResponse waitAndCalculateScore() throws InterruptedException {
+        RoundResponse roundResponse = new RoundResponse();
+        gameService.checkRoundStartedAtWait();
         TimeUnit.SECONDS.sleep(5);
-        lastCard = card;
-        card = deck.getRandomCard();
-        String correctChoice = "";
-        if (card.getCardRank() < lastCard.getCardRank()) {
-            correctChoice = "lower";
-        } else if (card.getCardRank() > lastCard.getCardRank()) {
-            correctChoice = "higher";
-        } else {
-            correctChoice = "equal";
-        }
-        if (correctChoice.equals(choice)) {
-            score += 1;
-        } else {
-            lives -= 1;
-        }
-        choice = "";
-        return card;
+        gameService.prepareAndCompleteRound(roundResponse);
+        gameService.checkRoundStartedAtWaitEnd();
+        return roundResponse;
     }
 
     @PostMapping("reset")
-    public void resetGame() {
-        lives = 3;
-        score = 0;
-        card = null;
-        lastCard = null;
+    public RoundResponse resetGame() {
+        RoundResponse roundResponse = new RoundResponse();
+        RoundResponse roundStartedAtReset = gameService.checkRoundStartedAtReset(roundResponse);
+        if (roundStartedAtReset != null) return roundStartedAtReset;
+        gameService.resetAllVariables();
+        roundResponse.setMessage(RoundResponseMessage.OK);
+        roundResponse.setCard(null);
+        return roundResponse;
+    }
+
+    @GetMapping("games")
+    public Page<Game> getGames(Pageable pageable, @RequestParam String playerName) {
+        if (playerName.isEmpty()) {
+            return gameRepository.findAll(pageable);
+        }
+        return gameRepository.findByPlayer_Name(pageable, playerName);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

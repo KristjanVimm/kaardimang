@@ -1,9 +1,6 @@
 package com.kristjan.kaardimang.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,11 +15,15 @@ public class Game {
 
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private Long gameId;
-    private String playerName;
+    private Long id;
+    private int score;
+    private Long duration;
+    @ManyToOne
+    private Player player;
 
-    public Game(String playerName) {
-        this.playerName = playerName;
+    public Game(int score, Long duration, Player player) {
+        this.score = score;
+        this.duration = duration;
+        this.player = player;
     }
-
 }
